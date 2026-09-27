@@ -1,4 +1,3 @@
-```cpp
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
@@ -1824,4 +1823,3 @@ void loop()
 {
     server.handleClient();
 }
-```
