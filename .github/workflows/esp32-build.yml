@@ -1,0 +1,72 @@
+name: Build ESP32 Firmware
+
+on:
+  push:
+    paths:
+      - 'ESP32/**'
+      - '.github/workflows/esp32-build.yml'
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+
+      - name: Build ESP32
+        working-directory: ESP32
+        run: |
+          pio run
+
+      - name: Prepare Initial Flash Package
+        run: |
+          mkdir -p ESP32/flash
+
+          cp ESP32/.pio/build/esp32dev/bootloader.bin \
+             ESP32/flash/bootloader.bin
+
+          cp ESP32/.pio/build/esp32dev/partitions.bin \
+             ESP32/flash/partitions.bin
+
+          cp ESP32/.pio/build/esp32dev/firmware.bin \
+             ESP32/flash/firmware.bin
+
+          BOOT_APP0=$(find ~/.platformio -name boot_app0.bin | head -n 1)
+
+          cp "$BOOT_APP0" \
+             ESP32/flash/boot_app0.bin
+
+          echo "bootloader.bin  -> 0x1000" > ESP32/flash/flash-manifest.txt
+          echo "partitions.bin  -> 0x8000" >> ESP32/flash/flash-manifest.txt
+          echo "boot_app0.bin   -> 0xE000" >> ESP32/flash/flash-manifest.txt
+          echo "firmware.bin    -> 0x10000" >> ESP32/flash/flash-manifest.txt
+
+          echo "Files prepared:"
+          ls -lh ESP32/flash
+
+      - name: Upload Firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: IoT-ESP32-Firmware
+          path: ESP32/.pio/build/esp32dev/firmware.bin
+          retention-days: 30
+
+      - name: Upload Initial Flash Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: IoT-ESP32-Initial-Flash
+          path: ESP32/flash/
+          retention-days: 30
