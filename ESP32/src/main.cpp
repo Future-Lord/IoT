@@ -18,7 +18,7 @@ const char* DEVICE_NAME = "ESP32-IoT";
 // =====================================================
 
 #ifndef LED_BUILTIN
-#define LED_BUILTIN 2
+#define LED_BUILTIN 0
 #endif
 
 const int LED_PIN = LED_BUILTIN;
